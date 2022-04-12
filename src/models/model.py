@@ -73,10 +73,12 @@ def MaskRCNN(config,training=False):
         # [batch, MAX_GT_INSTANCES, (y1, x1, y2, x2)] in image coordinates
         input_gt_boxes = layers.Input(shape=[None, 4], name="input_gt_boxes", dtype=tf.float32)
         # Normalize coordinates
-        h, w = tf.shape(input_image)[0], tf.shape(input_image)[1]
+        h, w = tf.shape(input_image)[1], tf.shape(input_image)[2]
         scale = tf.cast(tf.stack([h, w, h, w],axis=0),tf.float32) - tf.constant(1.0)
         shift = tf.constant([0., 0., 1., 1.])
-        gt_boxes=  tf.divide(input_gt_boxes- shift,scale)
+        gt_boxes=  tf.divide(input_gt_boxes - shift,scale)
+        # scale = tf.cast(tf.stack([h, w, h, w],axis=0),tf.float32)
+        # gt_boxes = tf.divide(input_gt_boxes,scale)
         
         # 3. GT Masks (zero padded)
         
@@ -212,7 +214,14 @@ def MaskRCNN(config,training=False):
                     "output_rois": output_rois,
                     "target_class_ids": target_class_ids,
                     "target_bbox": target_bbox,
-                    "target_mask": target_mask}
+                    "target_mask": target_mask,
+                    # testing
+                    "input_gt_class_ids": input_gt_class_ids,
+                    "input_gt_boxes": input_gt_boxes,
+                    "gt_boxes": gt_boxes,
+                    "input_gt_masks" : input_gt_masks,
+                    "target_rois" : target_rois
+                    }
                 #    rpn_class_loss, rpn_bbox_loss, class_loss, bbox_loss, mask_loss]
         model = Model(inputs, outputs, name='mask_rcnn')
     else:

@@ -1,6 +1,6 @@
 # Custom
 data/
-
+source_code/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

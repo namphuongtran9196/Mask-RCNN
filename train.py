@@ -41,7 +41,7 @@ def main(args):
     train_dataset = Dataset(config, args.dataset,classes_id=[1])
     train_dataset = iter(train_dataset)
     if args.val_dataset is not None:
-        val_dataset = Dataset(config, args.val_dataset)
+        val_dataset = Dataset(config, args.val_dataset,classes_id=[1])
         val_dataset = iter(val_dataset)
         min_val_total_loss = sys.float_info.max
         

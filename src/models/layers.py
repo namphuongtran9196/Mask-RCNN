@@ -11,6 +11,8 @@ import sys
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
 
+import logging
+
 import numpy as np
 import tensorflow as tf
 
@@ -302,12 +304,13 @@ def detection_targets_graph(proposals, gt_class_ids, gt_boxes, gt_masks, config)
 
     # Remove zero padding
     proposals, _ = utils.trim_zeros_graph(proposals, name="trim_proposals")
+    
     gt_boxes, non_zeros = utils.trim_zeros_graph(gt_boxes, name="trim_gt_boxes")
     gt_class_ids = tf.boolean_mask(gt_class_ids, non_zeros,
                                    name="trim_gt_class_ids")
     gt_masks = tf.gather(gt_masks, tf.where(non_zeros)[:, 0], axis=2,
                          name="trim_gt_masks")
-
+    
     # Handle COCO crowds
     # A crowd box in COCO is a bounding box around several instances. Exclude
     # them from training. A crowd box is given a negative class ID.
@@ -317,10 +320,10 @@ def detection_targets_graph(proposals, gt_class_ids, gt_boxes, gt_masks, config)
     gt_class_ids = tf.gather(gt_class_ids, non_crowd_ix)
     gt_boxes = tf.gather(gt_boxes, non_crowd_ix)
     gt_masks = tf.gather(gt_masks, non_crowd_ix, axis=2)
-
     # Compute overlaps matrix [proposals, gt_boxes]
+    print("proposals shape",proposals.shape)
     overlaps = overlaps_graph(proposals, gt_boxes)
-
+                
     # Compute overlaps with crowd boxes [proposals, crowd_boxes]
     crowd_overlaps = overlaps_graph(proposals, crowd_boxes)
     crowd_iou_max = tf.reduce_max(crowd_overlaps, axis=1)
@@ -331,6 +334,7 @@ def detection_targets_graph(proposals, gt_class_ids, gt_boxes, gt_masks, config)
     # 1. Positive ROIs are those with >= 0.5 IoU with a GT box
     positive_roi_bool = (roi_iou_max >= 0.5)
     positive_indices = tf.where(positive_roi_bool)[:, 0]
+    
     # 2. Negative ROIs are those with < 0.5 with every GT box. Skip crowds.
     negative_indices = tf.where(tf.math.logical_and(roi_iou_max < 0.5, no_crowd_bool))[:, 0]
 
@@ -441,7 +445,6 @@ class DetectionTargetLayer(layers.Layer):
         gt_class_ids = inputs[1]
         gt_boxes = inputs[2]
         gt_masks = inputs[3]
-
         # Slice the batch and run a graph for each slice
         # TODO: Rename target_bbox to target_deltas for clarity
         names = ["rois", "target_class_ids", "target_bbox", "target_mask"]
@@ -613,7 +616,6 @@ def fpn_classifier_graph(rois, feature_maps, image_meta,
     # ROI Pooling
     # Shape: [batch, num_rois, POOL_SIZE, POOL_SIZE, channels]
     # a = [rois, image_meta] + feature_maps
-    # print(a.shape)
     x = PyramidROIAlign([pool_size, pool_size],
                         name="roi_align_classifier")([rois, image_meta] + feature_maps)
     # Two 1024 FC layers (implemented with Conv2D for consistency)
