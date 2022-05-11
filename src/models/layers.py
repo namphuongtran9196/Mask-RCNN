@@ -83,10 +83,13 @@ def rpn_graph(feature_map, anchors_per_location, anchor_stride):
     # Bounding box refinement. [batch, H, W, anchors per location * depth]
     # where depth is [x, y, log(w), log(h)]
     x = layers.Conv2D(anchors_per_location * 4, (1, 1), padding="valid",
-                  activation='linear', name='rpn_bbox_pred')(shared)
+                  activation='sigmoid', name='rpn_bbox_pred')(shared)
 
     # Reshape to [batch, anchors, 4]
     rpn_bbox = layers.Lambda(lambda t: tf.reshape(t, [tf.shape(t)[0], -1, 4]))(x)
+    
+    # # Extra layer
+    # rpn_bbox = layers.Dense(4, name='rpn_bbox_dense',activation='linear')(rpn_bbox)
 
     return [rpn_class_logits, rpn_probs, rpn_bbox]
 
@@ -321,9 +324,7 @@ def detection_targets_graph(proposals, gt_class_ids, gt_boxes, gt_masks, config)
     gt_boxes = tf.gather(gt_boxes, non_crowd_ix)
     gt_masks = tf.gather(gt_masks, non_crowd_ix, axis=2)
     # Compute overlaps matrix [proposals, gt_boxes]
-    print("proposals shape",proposals.shape)
     overlaps = overlaps_graph(proposals, gt_boxes)
-                
     # Compute overlaps with crowd boxes [proposals, crowd_boxes]
     crowd_overlaps = overlaps_graph(proposals, crowd_boxes)
     crowd_iou_max = tf.reduce_max(crowd_overlaps, axis=1)

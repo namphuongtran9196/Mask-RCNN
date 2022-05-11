@@ -76,6 +76,7 @@ class Dataset(tf.keras.utils.Sequence):
         annotations_dir_path = os.path.join(dataset_dir, 'annotations')
         samples = []
         if classes_id is None:
+            self.map_source_class_id.update({0:0})
             with open(os.path.join(dataset_dir, "categories.json")) as f:
                 classes_id = json.load(f)
             for i in range(len(classes_id)):
@@ -83,6 +84,7 @@ class Dataset(tf.keras.utils.Sequence):
                 self.map_source_class_id.update({classes_id[i]['id']: i+1})
         else:
             classes_id.sort()
+            self.map_source_class_id.update({0:0})
             for i in range(len(classes_id)):
                 assert classes_id[i] != 0, 'id 0 is reserved for background'
                 self.map_source_class_id.update({classes_id[i]: i+1})
@@ -113,7 +115,7 @@ class Dataset(tf.keras.utils.Sequence):
         Get a random sample from the dataset
         :return:
         """
-        idx = np.random.randint(0, len(self.samples))
+        idx = np.random.randint(0, len(self.samples)//self.config.BATCH_SIZE)
         batch = self.indexes[idx * self.config.BATCH_SIZE:(idx + 1) *self.config.BATCH_SIZE]
         return self.__make_samples__(batch)
     
@@ -128,7 +130,8 @@ class Dataset(tf.keras.utils.Sequence):
         :return: a batch training dataset
         """
         samples = self.samples[batch_idx]
-        
+        print(batch_idx)
+        print(len(samples))
         # Anchors
         # [anchor_count, (y1, x1, y2, x2)]  
         backbone_shapes = utils.compute_backbone_shapes(self.config, self.config.IMAGE_SHAPE)

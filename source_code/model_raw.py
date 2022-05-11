@@ -1858,8 +1858,8 @@ class MaskRCNN():
             input_gt_boxes = layers.Input(
                 shape=[None, 4], name="input_gt_boxes", dtype=tf.float32)
             # Normalize coordinates
-            # gt_boxes = layers.Lambda(lambda x: norm_boxes_graph(
-            #     x, tf.shape(input_image)[1:3]))(input_gt_boxes)
+            gt_boxes = layers.Lambda(lambda x: norm_boxes_graph(
+                x, tf.shape(input_image)[1:3]))(input_gt_boxes)
             h, w = tf.shape(input_image)[0], tf.shape(input_image)[1]
             scale = tf.cast(tf.stack([h, w, h, w],axis=0),tf.float32) - tf.constant(1.0)
             shift = tf.constant([0., 0., 1., 1.])

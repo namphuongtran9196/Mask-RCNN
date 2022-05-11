@@ -97,7 +97,6 @@ def rpn_bbox_loss_graph(config, target_bbox, rpn_match, rpn_bbox):
     def return_loss(): return tf.reduce_mean(loss)
     def return_zeros(): return tf.constant(0.0)
     
-    
     return tf.switch_case(tf.size(loss), {0: return_zeros}, default= return_loss)
     
     # # loss = tf.switch(tf.size(loss) > 0, tf.reduce_mean(loss), tf.constant(0.0))

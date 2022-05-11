@@ -154,11 +154,17 @@ def MaskRCNN(config,training=False):
     # Proposals are [batch, N, (y1, x1, y2, x2)] in normalized coordinates
     # and zero padded.
     proposal_count = config.POST_NMS_ROIS_TRAINING if training else config.POST_NMS_ROIS_INFERENCE
-    rpn_rois = layersc.ProposalLayer(
-        proposal_count=proposal_count,
-        nms_threshold=config.RPN_NMS_THRESHOLD,
-        name="ROI",
-        config=config)([rpn_class, rpn_bbox, anchors])
+    
+    rpn_rois = tf.image.combined_non_max_suppression(rpn_bbox[:,:,tf.newaxis,:], rpn_class,proposal_count,
+                                                     proposal_count,
+                                                     config.RPN_NMS_THRESHOLD)
+    rpn_rois = rpn_rois.nmsed_boxes
+    print(rpn_rois.shape)
+    # rpn_rois = layersc.ProposalLayer(
+    #     proposal_count=proposal_count,
+    #     nms_threshold=config.RPN_NMS_THRESHOLD,
+    #     name="ROI",
+    #     config=config)([rpn_class, rpn_bbox, anchors])
     
     if training:
         # Class ID mask to mark class IDs supported by the dataset the image

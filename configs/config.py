@@ -217,7 +217,7 @@ class Config(object):
         self.GRADIENT_CLIP_NORM = 5.0
         
         # Path to save logs and trained model
-        self.CHECKPOINT_DIR = 'checkpoints'
+        self.CHECKPOINT_DIR = './data/coco/checkpoints'
         """Set values of computed attributes."""
         # Effective batch size
         self.BATCH_SIZE = self.IMAGES_PER_GPU * self.GPU_COUNT

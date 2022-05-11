@@ -6,6 +6,8 @@ import argparse
 parser = argparse.ArgumentParser(description='Convert dataset to tfrecord')
 parser.add_argument('-d','--dataset',type=str,help='path to dataset',default='./data/train')
 parser.add_argument('-dv','--val_dataset',type=str,help='path to val dataset',default=None)
+parser.add_argument('--classes', type=str,help='classes_id for training a number of classes. Default is none\
+                                            for training all classes in dataset. Example argument: --classes 1,5,6,7,8 ', default=None)
 parser.add_argument('--gpu', type=int,help='GPU ID, default is 0, -1 for using CPU', default=0)
 args = parser.parse_args()
 
@@ -36,12 +38,13 @@ def main(args):
     config.STEPS = 1000
     config.STEPS_PER_EPOCH = 500
     
-    
+    classes_id = args.classes.split(',') if args.classes else None
+    classes_id = [int(i) for i in classes_id] if classes_id else None
     # load dataset
-    train_dataset = Dataset(config, args.dataset,classes_id=[1])
+    train_dataset = Dataset(config, args.dataset,classes_id=classes_id)
     train_dataset = iter(train_dataset)
     if args.val_dataset is not None:
-        val_dataset = Dataset(config, args.val_dataset,classes_id=[1])
+        val_dataset = Dataset(config, args.val_dataset,classes_id=classes_id)
         val_dataset = iter(val_dataset)
         min_val_total_loss = sys.float_info.max
         
@@ -139,7 +142,6 @@ def main(args):
         data = next(train_dataset,None)
         # check if the batch is end of dataset
         if data is None:
-            train_dataset.on_epoch_end()
             train_dataset = iter(train_dataset)
             data = next(train_dataset)
         # train 1 step
